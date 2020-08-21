@@ -10,10 +10,7 @@ app.config['MONGO_URI'] = 'mongodb://localhost:27017/Users'
 
 mongo = PyMongo(app)
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
-@app.route('/add', method=['POST'])
+@app.route('/api/v1/add', methods=['POST'])
 def add_user():
     json = request.json
     name = json['name'] 
@@ -23,14 +20,16 @@ def add_user():
     if name and email and password and request.method ==  'POST':
         password_hash = generate_password_hash(password)
         
-        mongo.db.users.insert({
+        payload = {
             'name':name,
             'email':email,
             'password':password_hash,
-        })
-
-        response = jsonify("User added.")
-        response.status_code = 200
+        }
+        mongo.db.users.insert_one(payload)
+        del payload['_id']
+        del payload['password']
+        payload.update({'status_code':200})
+        response = dumps(payload)
         return response
 
 @app.errorhandler(404)
@@ -42,3 +41,7 @@ def not_found(error=None):
     error_response = jsonify(error_message)
     error_response.code = 404
     return error_message
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
