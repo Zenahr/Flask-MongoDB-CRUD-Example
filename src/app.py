@@ -25,16 +25,22 @@ def add_user():
             'email':email,
             'password':password_hash,
         }
+        
         mongo.db.users.insert_one(payload)
         del payload['_id']
         del payload['password']
-        payload.update({'status_code':200})
         response = dumps(payload)
-        return Response(response, mimetype='application/json')
+        return Response(response, status=200, mimetype='application/json')
 
 @app.route('/api/v1/users', methods=['GET'])
 def users():
     return Response(dumps(mongo.db.users.find()), mimetype='application/json')
+
+@app.route('/api/v1/users/<user_id>', methods=['GET'])
+def user(user_id):
+    response = dumps(mongo.db.users.find_one({'_id': ObjectId(user_id)}))
+    print(response)
+    return Response(response, status=200, mimetype='application/json')
 
 @app.errorhandler(404)
 def not_found(error=None):
