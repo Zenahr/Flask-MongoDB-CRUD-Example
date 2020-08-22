@@ -1,15 +1,14 @@
 from flask import Flask, jsonify, request, Response
+from pymongo import MongoClient
 from flask_pymongo import PyMongo
 from bson.json_util import dumps
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'secret'
-app.config['MONGO_URI'] = 'mongodb://localhost:27017/anime'
-
-mongo = PyMongo(app)
-conn = mongo.db.anime
+client = MongoClient()
+db = client.anime
+collection = db.anime
 
 @app.route('/api/v1/anime/add', methods=['POST'])
 def add_item():
@@ -22,28 +21,28 @@ def add_item():
     if request.method ==  'POST' and anime and season and episode and rating:
 
         payload = {
-            'anime': anime, 
-            'season': season, 
-            'episode': episode,
-            'rating': rating,
+            'anime': json['anime'], 
+            'season': json['season'], 
+            'episode': json['episode'],
+            'rating': json['rating'],
         }
 
-        conn.insert_one(payload)
+        collection.insert_one(payload)
         response = dumps(payload)
         return Response(response, status=200, mimetype='application/json')
 
 @app.route('/api/v1/anime', methods=['GET'])
 def items():
-    return Response(dumps(conn.find()), mimetype='application/json')
+    return Response(dumps(collection.find()), mimetype='application/json')
 
 @app.route('/api/v1/anime/<anime_id>', methods=['GET', 'DELETE'])
 def item(item_id):
     if request.method ==  'GET':
-        response = dumps(conn.find_one({'_id': ObjectId(item_id)}))
+        response = dumps(collection.find_one({'_id': ObjectId(item_id)}))
         print(response)
         return Response(response, status=200, mimetype='application/json')
     if request.method ==  'DELETE': # TODO: check if user exists and tell in response, otherwise delete.
-        conn.delete_one({'_id': ObjectId(item_id)})
+        collection.delete_one({'_id': ObjectId(item_id)})
         return Response("Entry deleted.", status=200, mimetype='text/plain')
 
 
