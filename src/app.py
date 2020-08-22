@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_pymongo import PyMongo
 from bson.json_util import dumps
 from bson.objectid import ObjectId
@@ -30,7 +30,11 @@ def add_user():
         del payload['password']
         payload.update({'status_code':200})
         response = dumps(payload)
-        return response
+        return Response(response, mimetype='application/json')
+
+@app.route('/api/v1/users', methods=['GET'])
+def users():
+    return Response(dumps(mongo.db.users.find()), mimetype='application/json')
 
 @app.errorhandler(404)
 def not_found(error=None):
