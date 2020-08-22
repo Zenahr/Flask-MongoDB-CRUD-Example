@@ -36,11 +36,16 @@ def add_user():
 def users():
     return Response(dumps(mongo.db.users.find()), mimetype='application/json')
 
-@app.route('/api/v1/users/<user_id>', methods=['GET'])
+@app.route('/api/v1/users/<user_id>', methods=['GET', 'DELETE'])
 def user(user_id):
-    response = dumps(mongo.db.users.find_one({'_id': ObjectId(user_id)}))
-    print(response)
-    return Response(response, status=200, mimetype='application/json')
+    if request.method ==  'GET':
+        response = dumps(mongo.db.users.find_one({'_id': ObjectId(user_id)}))
+        print(response)
+        return Response(response, status=200, mimetype='application/json')
+    if request.method ==  'DELETE': # TODO: check if user exists and tell in response, otherwise delete.
+        mongo.db.users.delete_one({'_id': ObjectId(user_id)})
+        return Response("User deleted.", status=200, mimetype='text/plain')
+
 
 @app.errorhandler(404)
 def not_found(error=None):
